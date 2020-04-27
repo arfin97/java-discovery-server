@@ -1,0 +1,2 @@
+.Discovery Server
+* xref:index.adoc[Welcome]

@@ -1,0 +1,5 @@
+name: discovery-server
+title: Discovery Server
+version: dev
+nav:
+- modules/ROOT/nav.adoc
