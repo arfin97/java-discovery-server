@@ -18,7 +18,7 @@ image::ROOT:image.jpg[]
 xref:ROOT:examplepage.adoc[Go to 2nd Page]
 
 
-include::CODE:example$discovery-server\src\main\java\com\moviedatabase\discoveryserver\DiscoveryServerApplication.java[]
+include::CODE:example$discovery-server/src/main/java/com/moviedatabase/discoveryserver/DiscoveryServerApplication.java[]
 
 
 
