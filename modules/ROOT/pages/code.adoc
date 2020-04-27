@@ -7,12 +7,12 @@ include::CODE:example$discovery-server/src/main/java/com/moviedatabase/discovery
 
 [source, properties]
 ----
-include::CODE:example$discovery-server/modules/CODE/examples/discovery-server/src/main/resources/application.properties[]
+include::CODE:example$discovery-server/src/main/resources/application.properties[]
 ----
 
 [source, xml]
 ----
-include::CODE:example$discovery-server/modules/CODE/examples/discovery-server/pom.xml[]
+include::CODE:example$discovery-server/pom.xml[]
 ----
 
 
