@@ -1,15 +1,18 @@
 = CODES
 
+.Main
 [source, java]
 ----
 include::CODE:example$discovery-server/src/main/java/com/moviedatabase/discoveryserver/DiscoveryServerApplication.java[]
 ----
 
+.Properties:
 [source, properties]
 ----
 include::CODE:example$discovery-server/src/main/resources/application.properties[]
 ----
 
+.POM
 [source, xml]
 ----
 include::CODE:example$discovery-server/pom.xml[]

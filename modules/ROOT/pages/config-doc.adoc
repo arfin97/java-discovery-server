@@ -3,11 +3,12 @@
 [TIP]
 OFFICIAL DOCUMENTATION: http://https://spring.io/guides/gs/service-registration-and-discovery/[Link]
 
-. You are probably seeing a lot of errors popping up in your console. That’s because you added Eureka Discovery Client Dependency in your class path. This dependency will try to register itself in a discovery server. As there is no server yet. It is throwing exceptions.
+[NOTE]
+You are probably seeing a lot of errors popping up in your console. That’s because you added Eureka Discovery Client Dependency in your class path. This dependency will try to register itself in a discovery server. As there is no server yet. It is throwing exceptions.
 
-. Create a discovery Server: 
-+
+== Create a discovery Server: 
 image::ROOT:spring-initilizer-discovery-server.png[]
+
 . Give port 8761 and name discovery-server in application.properties
 . Add @EnableEurekaServer annotation in the main class to make it a discovery server.
 . Add @EnableEurekaClient annotation in the client classes to make them Eureka client.
