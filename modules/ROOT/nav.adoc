@@ -1,2 +1,4 @@
 .Discovery Server
-* xref:index.adoc[Welcome]
+* xref:index.adoc[What is it?]
+* xref:config-doc.adoc[Configuration]
+* xref:faq.adoc[FAQ]
