@@ -1,5 +1,5 @@
-name: discovery-server
+name: microservices
 title: Discovery Server
-version: dev
+version: master
 nav:
 - modules/ROOT/nav.adoc
