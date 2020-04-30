@@ -1,0 +1,346 @@
+:toc:
+:toclevels: 5
+:sectnums:
+:sectnumlevels: 5
+
+= Discovery Server: Eureka
+
+== Eureka
+ It's a registry that acts like a phone-book for your microservices. Eureka itself is a rest-based service, primarily used by Netflix in their AWS Cloud for finding services, for load balancing fail over, and mainly for middle-tier services. It's a really powerful tool for helping you kind of register these things dynamically. There's no database behind the scenes. It's really actually made up of a live look at the health of individual systems. It's an AP system if you look at cap theorem. So it's okay to sacrifice consistency, because it prioritizes availability and partition tolerance.
+
+== Role of Service Disovery
+image::role-of-service-discovery.png[]
+
+== Components of Eureka Server and Workflow
+image::eureka-workflow.png[]
+
+== Get up and Running: Eureka Server Configuration
+
+. Make A discover server project from spring initializer (Eureka Server). This is a basic spring project with Eureka Server. To configure it to an actual Eureka server and to see the Eureka Dashboard we need to do some steps.
+. Add an `server.port=8761`.
+. Make the server non-client. All Eureka Servers are default clients. We don’t need this functionality unless we have multiple eureka server.
+[source, properties]
+server.port=8761
+spring.application.name=discovery-server
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
++
+[NOTE]
+If last two lines are not added you'll get exception like. Because it will try to register itself with another eureka server.
+`TransportException: Cannot execute request on any known server`
+[NOTE]
+`registerWithEureka:` If we make this property as true then while the server starts the inbuilt client will try to register itself with the Eureka server.
+`fetchRegistry:` The inbuilt client will try to fetch the Eureka registry if we configure this property as true.
++
+. Add Eureka Server Annotation in main class.
+[source, java]
+@SpringBootApplication
+@EnableEurekaServer
+public class DiscoveryServerApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(DiscoveryServerApplication.class, args);
+	}
+}
++
+[NOTE]
+If you get XML errors, you need to add some libraries as Java 11 Doesn’t support those now. But Cloud Hoxton Versions are now compatible with Java 11 So you might not need them.
+
+. Go to http://localhost:8761 to see the `Eureka-Dashboard`. At the moment, we see basic indicators such as status and health indicators.
+
+image::eureka-dashboard.png[]
+
+== Get up and Running: Eureka Client Configuration
+. Init a project using `Eureka Client` dependency or Make all the projects to Eureka Client by adding Eureka Client Dependency.
+. Add application name and port in properties file.
+. They will automatically find the 8761 port as no explicit server is configured. And they will register themselves as the application.name property.
+[NOTE]
+Then we need to annotate with either @EnableDiscoveryClient or @EnableEurekaClient – note that this annotation is optional if we have the spring-cloud-starter-netflix-eureka-client dependency on the classpath.
+@EnableDiscoveryClient is generic and will work with discovery services other than eureka.
+. Go to dashboard to see the registerd services
+
+image::eureka-instances.png[]
+
+image::eureka-service-discovery.png[]
+
+image::disvoery-client-2.png[]
+
+== Getting the URLS
+
+=== Using RestTemplate and DiscoveryServer
+. Add @LoadBalanced to RestTemplateBean.
+[source, java]
+@SpringBootApplication
+public class MovieServiceApplication {
+	@Bean
+	@LoadBalanced
+	public RestTemplate getRestTemplate(){
+		return new RestTemplate();
+	}
+	public static void main(String[] args) {
+		SpringApplication.run(MovieServiceApplication.class, args);
+	}
+}
+
+. Change the names of HardCoded URLS to application name to make it fully discover server dependent. Add load balanced annotation into your rest template.
+@RestController
+public class MovieController {
+[source, java]
+@Autowired
+private RestTemplate restTemplate;
+    @RequestMapping("/movie")
+    public Movie getMovie(){
+        //MovieName movieName = restTemplate.getForObject("http://localhost:8082/name", MovieName.class);
+        //MovieDetail movieDetail = restTemplate.getForObject("http://localhost:8083/detail", MovieDetail.class);
+        MovieName movieName = restTemplate.getForObject("http://movie-name-service/name", MovieName.class);
+        MovieDetail movieDetail = restTemplate.getForObject("http://movie-detail-service/detail", MovieDetail.class);
+        return new Movie(movieName.getName(), movieDetail.getMovieDetail());
+    }
+}
+
+=== Using Instance object
+We can use loadbalancer to insert our url using @LoadBalancer or we can manually use `Instance Object` to go through all the
+instances of a service and pick their URL to inject.
+
+image::instance-object.png[]
+
+== Eureka Client configuration: Making environment agnostic
+[source, yml]
+spring:
+  application:
+    name: spring-cloud-eureka-client
+server:
+  port: 0
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    preferIpAddress: true
+
+The `${EUREKA_URI:http://localhost:8761/eureka}` is the key here.
+EUREKA_URI will be replaced by the configuration value defiend in configuration file. Or it will fall back to the default `EUREKA_URI:http://localhost:8761/eureka`
+When we decided to set up our Eureka Client this way, we had in mind that this kind of service should later be easily scalable.
+
+
+
+== Clustering Multiple Discovery Servers
+. We need different host name to setup multiple discovery server. Go to `C:\Windows\System32\drivers\etc`
+. Copy the host file in desktop to edit (You cannot edit in etc folder). Before editing make a backup copy of it.
+. Add the following lines
+[source, file]
+	127.0.0.1       localhost
+	127.0.0.1       localhost2
+
+. Make two discovery server as before. Name them `discovery-server
+. Give `server.port=8761` to one server and `server.port=8762` to another
+. Add the following properties in `8761`
+[source, properties]
+spring.application.name=eureka-naming-server
+server.port=8761
+eureka.instance.hostname:localhost
+eureka.client.serviceUrl.defaultZone:http://localhost2:8762/eureka/
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+. Add the following properties in `8762`
+[source, properties]
+spring.application.name=eureka-naming-server
+server.port=8762
+eureka.instance.hostname:localhost2
+eureka.client.serviceUrl.defaultZone:http://localhost:8761/eureka/
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+. Run both of them and see each other can detect themselves and showed in DS Replicas.
+
+[NOTE]
+There is a pattern called gossiping in Consule that works like facebook mutual friends finding to look for discovery server.
+
+[NOTE]
+In real life you'll have the configuration files in Configuration Server. So you won't have to hard code the
+details of each server in all the instances.
+
+== Health of a Microservice
+=== How Eureka Ensures Health
+. When server starts it sends a "Regester me" REST request.
+. When it goes down it sends "Unregister me" REST request.
+. If "Unregister me" call received it deletes the data. It is a safe way to deregister. It is knowns as "Graceful Shutdown".
+. But Ungraceful shutdown can happen. To handle ungraceful client shutdowns the server expects "Register me" request from the client at specific intervals.
+It is knowns as `heartbeeats`
+. By default the server expects heartbeats every 30 seconds. This is knowns are `renewal`
+. The server sets a `renewal threashold` that determiens how many renewal it *should* get if all the instances are healthy.
+. If the renewal count is less than threashold, it doens't immidietly delete the instance. This mechanism knowns as `self-preservation`
+. It is very unlikely that 900 instance are down out of 1000 at the same time. This might be caused due to a
+network problem or maintanance shcedule. To handle these types of situation `self preservation mode` is introduced.
+[NOTE]
+It is set by default, so in your learning stage you might have confusion why this thing is necessary.
+The real benefit of self-preservation mode can be realized if there is a lot of microservices.
+[NOTE]
+`eureka.instance.hostname=localhost` is particularly important since we're running it in a local machine. Otherwise, we may end up creating an unavailable replica within the Eureka server – messing up the client's heartbeat counts.
+
+=== Self-Preservation Mechanism
+==== Self-Preservation Data Calculation Example
+From the screenshot, we can see that our Eureka server has six registered client instances and the total renewal threshold is 11. The threshold calculation is based on three factors:
+
+* Total number of registered client instances – 6
+* Configured client renewal interval – 30 seconds
+* The configured renewal percentage threshold – 0.85
+* Considering all these factors, in our case, the threshold is 11.
+
+image::self-preservation-calculation.png[]
+
+
+==== Simulating an ungraceful shutdown situation.
+In order to simulate a temporary network problem,
+
+* Set the property `eureka.client.should-unregister-on-shutdown=false` at the client-side
+* Stop the client instance.
+* Because we set the should-unregister-on-shutdown flag as false,  the client won't invoke the unregister call and the server assumes that this is an ungraceful shutdown.
+* Now wait for 90 seconds set by our `eureka.instance.lease-expiration-duration-in-seconds` property.
+* Eureka Server is now in self-preservation mode and stopped evicting instances.
+* Let's now inspect the registered instances section to see if the stopped instance is still available or not. As we can see, it is available but with the status as DOWN:
+* The only way the server can get out of self-preservation mode is either by starting the stopped instance or by disabling self-preservation itself.
+* If we repeat the same steps by setting the flag eureka.server.enable-self-preservation as false, then the Eureka server will evict the stopped instance from the registry after the configured lease expiration duration property.
+
+
+*By default, Eureka servers run with self-preservation enabled.*
+
+==== Self-Preservation Configurations
+. `eureka.server.enable-self-preservation:` Configuration for disabling self-preservation – the default value is true
+. `eureka.server.expected-client-renewal-interval-seconds:` The server expects client heartbeats at an interval configured with this property – the default value is 30
+. `eureka.instance.lease-expiration-duration-in-seconds:` Indicates the time in seconds that the Eureka server waits since it received the last heartbeat from a client before it can remove that client from its registry – the default value is 90
+. `eureka.server.eviction-interval-timer-in-ms:` This property tells the Eureka server to run a job at this frequency to evict the expired clients – the default value is 60 seconds
+. `eureka.server.renewal-percent-threshold:` Based on this property, the server calculates the expected heartbeats per minute from all the registered clients – the default value is 0.85
+. `eureka.server.renewal-threshold-update-interval-ms:` This property tells the Eureka server to run a job at this frequency to calculate the expected heartbeats from all the registered clients at this minute – the default value is 15 minutes
+
+[NOTE]
+In most cases, the default configuration is sufficient. But for specific requirements, we might want to change these configurations. Utmost care needs to be taken in those cases to avoid unexpected consequences like wrong renew threshold calculation or delayed self-preservation mode activation.
+
+=== Get health Data through Actuator.
+You can get your service health information with a helpful endpoint spring boot actuator gives.
+
+. Add `Spring Boot Actuator` dependency in pom file.
+. Go to `http://localhost:8080/health` to see the health information in JSON format.
+
+
+
+=== More Health of a Service
+. Heartbeat only tells if the service is alive or not. It doesn't tell if it is healthy or not.
+. But it is possible to include more health informations. We can create our own health indicator.
+. Our custom health indicator can indicate health of a service every few secconds and it can also
+have the mechanism to register or deregister itself from the registry based on our custom logic.
+
+=== Demo: Create a custom health check
+. Add `eureka.client.healtcheck.enabled=true`
+. Create a classn named `CustomHealthCheck` or anything you want.
+. Implement `HealthIndicator' interface to your class.
+
++
+.Code
+[source, java]
+@Component
+public class CustomHealthCheck implements HealthIndicator {
+	int errorcode = 0;
+	@Override
+	public Health health() {
+		System.out.println("health check performed, error code is " + errorcode);
+		if(errorcode > 4 && errorcode < 10) {
+			errorcode++;
+			return Health.down().withDetail("Custom Error Code", errorcode).build();
+		}
+		else {
+			errorcode++;
+			return Health.up().build();
+		}
+	}
+}
++
+. After 4 iteration our output will be the following
++
+.Output
+image::custom-healthcheck-output.png[]
+
+=== Service Health Summery
+
+image::are-services-healthy.png[]
+
+image::health-in-eureka.png[]
+
+
+== Registry Cacheing
+* Discovery server was created with high availability in mind.
+* Each client gets a copy of regestry, so if the discovery server is down. They can still talk to each other.
+* If there is a change in the registry, the client is smart enough to fetch only the deltas(changes) to
+update the registry.
+
+image::discovery-server-caching.png[]
+
+
+== Advanced Configurations
+=== Three types of configuration
+
+. eureka.server.* -> For server configurations.
+. eureka.client.* -> For how client interacts with discovery server. (Time out)
+. eureka.instance.* -> For instances are things that are registered in Eureka Server. (Hostname, Healthcheck)
+
+=== Advance configuration options
+Eureka comes with a lot of default features out of the box. But you can also configure tons of things.
+Some of the things are..
+
+image::advanced-configuration-opitons.png[]
+
+== Securing The Eureka Server
+To be updated....
+
+==== Authenticating with the Eureka Server
+
+==== Registering a Secure Application
+
+
+
+== AWS Support
+* Application that uses discovery server checks if it is deployed in AWS environment. If so, it fetches all the
+necessary meta data for the environment automatically like: Amazon Machine Image, Zone etc. It sends
+these information to the discovery server when it registers.
+* Elastic IP binding support: Eureka Server automatically binds itself to next available elastic IP address.
+* Eureka-Client is Zone aware. So it will contact the current zone discovery server.
+* Multi-Region Aware.
+
+
+== Miscellaneous
+
+* Instance ID
+* Zones
+* EurekaClient without Jersey
+* Refreshing Eureka Clients
+* Spring Cloud LoadBalancer
+* Peer Awareness
+
+
+
+
+== Resources
+=== Start
+. https://cloud.spring.io/spring-cloud-netflix/reference/html/[Spring Cloud Netflix] [Eureka Official Docs]
+. https://www.baeldung.com/spring-cloud-netflix-eureka[Introduction to Spring Cloud Netflix – Eureka] [baeldung]
+. https://spring.io/guides/gs/service-registration-and-discovery/[Service Registration and Discovery] [Spring Quick Starter Project]
+. https://app.pluralsight.com/player?course=spring-cloud-fundamentals&author=dustin-schultz&name=spring-cloud-fundamentals-m2&clip=0&mode=live[Spring Cloud Fundamentals.] [Pluralsight]
+. https://app.pluralsight.com/player?course=java-microservices-spring-cloud-coordinating-services&author=richard-seroter&name=d3021dfd-e6af-4065-a89a-c3e953e982d0&clip=0&mode=live[Java Microservices with Spring Cloud: Coordinating Services.] [Pluralsight]
+
+
+
+=== Clustering
+. https://medium.com/become-developer/how-to-work-with-multiple-instances-of-eureka-naming-server-to-avoid-a-single-point-of-failure-d953544281d0[How to work with multiple instances of Eureka Naming Server to avoid a single point of failure] [Medium Article]
+. https://tech.asimio.net/2017/03/06/Multi-version-Service-Discovery-using-Spring-Cloud-Netflix-Eureka-and-Ribbon.html[Multi-version Service Discovery using Spring Cloud Netflix Eureka and Ribbon] [Article]
+. https://cloud.spring.io/spring-cloud-netflix/reference/html/#netflix-eureka-server-starter[How to Include Eureka Server] [Spring Documentation]
+. https://stackoverflow.com/questions/42554653/how-to-create-multiple-instances-of-eureka-services-registered-into-eureka-servi[how to create multiple instances of eureka services registered into eureka service registry?] [StackOverflow]
+
+=== Health
+. https://www.baeldung.com/eureka-self-preservation-renewal[Guide to Eureka Self Preservation and Renewal] [baeldung]
+. https://github.com/Netflix/eureka/wiki/Understanding-Eureka-Peer-to-Peer-Communication[Understanding Eureka Peer to Peer Communication] [Documentation]
+
+=== AWS Support
+. https://aws.amazon.com/marketplace/pp/CallMiner-Inc-Eureka-Starter-Edition/B075X29S3C[Eureka - Starter Edition - AWS Marketplace] [AWS Eureka Docs]
+
+=== How to open multiple projects in IntelliJ
+. https://www.youtube.com/watch?v=9pRf3VRXEdo[IntelliJ Workspace Tips - Multiple Repositories in One Workspace] [Youtube]
