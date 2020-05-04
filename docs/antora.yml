@@ -2,4 +2,5 @@ name: spring-cloud-discovery-server
 title: Spring cloud discovery server
 version: master
 nav:
+- modules/ROOT/nav.adoc
 - modules/spring-cloud-discovery-server/nav.adoc
