@@ -1,0 +1,1 @@
+* xref:spring-cloud-discovery-server.adoc[Spring Cloud Discovery Server]

@@ -1,6 +1,0 @@
-.Discovery Server
-* xref:index.adoc[What is it?]
-* xref:config-doc.adoc[Configuration]
-** xref:code.adoc[Code]
-* xref:resources.adoc[Resources]
-* xref:faq.adoc[FAQ]
