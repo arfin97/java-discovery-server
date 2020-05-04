@@ -6,7 +6,9 @@
 = Discovery Server: Eureka
 
 == Eureka
- It's a registry that acts like a phone-book for your microservices. Eureka itself is a rest-based service, primarily used by Netflix in their AWS Cloud for finding services, for load balancing fail over, and mainly for middle-tier services. It's a really powerful tool for helping you kind of register these things dynamically. There's no database behind the scenes. It's really actually made up of a live look at the health of individual systems. It's an AP system if you look at cap theorem. So it's okay to sacrifice consistency, because it prioritizes availability and partition tolerance.
+
+It's a registry that acts like a phone-book for your microservices. Eureka itself is a rest-based service, primarily used by Netflix in their AWS Cloud for finding services, for load balancing fail over, and mainly for middle-tier services. It's a really powerful tool for helping you kind of register these things dynamically. There's no database behind the scenes. It's really actually made up of a live look at the health of individual systems. It's an AP system if you look at cap theorem. So it's okay to sacrifice consistency, because it prioritizes availability and partition tolerance.
+
 
 == Role of Service Disovery
 image::role-of-service-discovery.png[]
