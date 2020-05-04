@@ -1,5 +1,5 @@
-name: config-server
-title: Configuration Server
-version: dev
+name: spring-cloud-discovery-server
+title: Spring cloud discovery server
+version: master
 nav:
 - modules/spring-cloud-discovery-server/nav.adoc
