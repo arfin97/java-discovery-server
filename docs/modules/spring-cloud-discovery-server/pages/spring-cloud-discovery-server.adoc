@@ -294,9 +294,9 @@ image::advanced-configuration-opitons.png[]
 == Securing The Eureka Server
 To be updated....
 
-==== Authenticating with the Eureka Server
+=== Authenticating with the Eureka Server
 
-==== Registering a Secure Application
+=== Registering a Secure Application
 
 
 
