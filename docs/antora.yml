@@ -1,5 +1,2 @@
 name: microservices
-title: Spring cloud discovery server
 version: master
-nav:
-- modules/spring-cloud-discovery-server/nav.adoc
