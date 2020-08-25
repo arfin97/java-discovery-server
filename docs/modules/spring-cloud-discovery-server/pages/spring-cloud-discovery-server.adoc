@@ -50,6 +50,11 @@ image::eureka-dashboard.png[]
 . Init a project using `Eureka Client` dependency or Make all the projects to Eureka Client by adding Eureka Client Dependency.
 . Add application name and port in properties file.
 . They will automatically find the 8761 port as no explicit server is configured. And they will register themselves as the application.name property.
+
+[source, properties]
+spring.application.name=movie-db-service
+server.port=8082
+
 [NOTE]
 Then we need to annotate with either @EnableDiscoveryClient or @EnableEurekaClient – note that this annotation is optional if we have the spring-cloud-starter-netflix-eureka-client dependency on the classpath.
 @EnableDiscoveryClient is generic and will work with discovery services other than eureka.
